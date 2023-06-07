@@ -32,3 +32,9 @@ def clear_figs():
         fig = matplotlib.pyplot.figure(i)
         fig.clear()
         matplotlib.pyplot.close( fig )
+
+def get_participants():
+    local_path = os.path.dirname(os.path.realpath(__file__))
+    local_data_path = f"{local_path}\Data"
+    participants = os.listdir(local_data_path)
+    return participants
