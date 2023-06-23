@@ -1,6 +1,6 @@
-import os
 import matplotlib.pyplot as plt
 import matplotlib
+import os
 
 def create_folders(folder_list, new_dir):
     paths = []
@@ -33,8 +33,14 @@ def clear_figs():
         fig.clear()
         matplotlib.pyplot.close( fig )
 
+
 def get_participants():
-    local_path = os.path.dirname(os.path.realpath(__file__))
+    local_path = os.path.dirname(os.path.realpath('main.py'))
     local_data_path = f"{local_path}\Data"
+
     participants = os.listdir(local_data_path)
     return participants
+
+def get_participant_nr(participant):
+    return get_participants().index(participant) + 1
+
