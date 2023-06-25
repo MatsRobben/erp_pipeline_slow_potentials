@@ -8,26 +8,24 @@ def reaction_times(events, gocue=True):
     """
     Compute the reaction times for a set of trials.
 
-    Parameters
-    ----------
-    events : ndarray, shape (n_events, 3)
-        The events to compute the reaction times for. The array should have
-        three columns: the sample number, the duration, and the event ID.
+    Args:
+        events (ndarray, shape=(n_events, 3)): The events to compute the reaction times for.
+            The array should have three columns: the sample number, the duration, and the event ID.
+        gocue (bool, optional): Whether to compute the reaction times from the start of the trial
+            (events with ID 210 or 211) to the first occurrence of an event with ID 150 (pressure sensor activation).
+            Default is True.
 
-    Returns
-    -------
-    reaction_times : ndarray, shape (n_trials,)
-        The reaction times, computed as the time difference between the
-        first occurrence of events with ID 210 or 211 (the start of the trial)
-        and the first occurrence of events with ID 150 (the first time pressure
-        is detected on the pressure sensor).
-    bad_trials : list
-        A list of indices for trials that do not have event ID 150 following every 
-        occurrence of event ID 210 or 211.
+    Returns:
+        tuple: A tuple containing:
+            - reaction_times (ndarray, shape=(n_trials,)): The reaction times, computed as the time difference
+              between the first occurrence of events with ID 210 or 211 (the start of the trial) and the first
+              occurrence of an event with ID 150 (the first time pressure is detected on the pressure sensor).
+            - bad_trials (list): A list of indices for trials that do not have event ID 150 following every
+              occurrence of event ID 210 or 211.
 
-    Notes
-    -----
-    This function assumes that the events 210 and 211 are followed by an event with ID 150.
+    Notes:
+        This function assumes that the events 210 and 211 are followed by an event with ID 150.
+
 
     """
     markers_go_cue = (events[:,2] == 210) | (events[:,2] == 211)
@@ -78,24 +76,20 @@ def reaction_times(events, gocue=True):
 
 def RT_outliers(events, threshold, n_channels=1, gocue=True):
     """
-    Identifies reaction time (RT) outliers based on a threshold value and returns a boolean array indicating which 
-    trials contain outliers.
-    
-    Parameters
-    ----------
-    events : numpy.ndarray
-        A 2-dimensional numpy array containing event information, where each row represents an event and each 
-        column represents a different attribute of the event (e.g., time, event type, etc.).
-    threshold : float
-        A numeric value representing the threshold above which RTs will be considered outliers.
-    n_channels : int, optional
-        The number of channels in the data. 
-    
-    Returns
-    -------
-    numpy.ndarray
-        A boolean array indicating which trials contain RT outliers. If `_2d` is True, the array is 2-dimensional 
-        with the shape being (Epochs, channels).
+    Identify reaction time (RT) outliers based on a threshold value and return a boolean array indicating
+    which trials contain outliers.
+
+    Args:
+        events (numpy.ndarray): A 2-dimensional numpy array containing event information, where each row represents
+            an event and each column represents a different attribute of the event (e.g., time, event type, etc.).
+        threshold (float): A numeric value representing the threshold above which RTs will be considered outliers.
+        n_channels (int, optional): The number of channels in the data. Default is 1.
+        gocue (bool, optional): Whether the reaction times are computed from the start of the trial (events with ID 210
+            or 211) to the first occurrence of an event with ID 150 (pressure sensor activation). Default is True.
+
+    Returns:
+        numpy.ndarray: A boolean array indicating which trials contain RT outliers. If `n_channels` is greater than 1,
+            the array is 2-dimensional with the shape (Epochs, channels).
     """
     # Compute reaction times for each trial
     RTs, bad_trials = reaction_times(events, gocue)
@@ -109,6 +103,18 @@ def RT_outliers(events, threshold, n_channels=1, gocue=True):
     return np.tile(outliers, (n_channels, 1)).T if n_channels > 1 else outliers
 
 def plot_reaction_times(par, reaction_times, bad_trials, min_threshold, max_threshold, gocue=True):
+    """
+    Plot the reaction times for good and bad trials, along with minimum and maximum thresholds.
+
+    Args:
+        par (int): Participant number.
+        reaction_times (ndarray): Array of reaction times.
+        bad_trials (list): List of indices for bad trials.
+        min_threshold (float): Minimum threshold for reaction times.
+        max_threshold (float): Maximum threshold for reaction times.
+        gocue (bool, optional): Whether the reaction times are computed from the start of the trial (events with ID 210
+            or 211) to the first occurrence of an event with ID 150 (pressure sensor activation). Default is True.
+    """
     fig = plt.figure(figsize=(10, 6))
 
     # Create an array of indices for good trials
@@ -146,21 +152,17 @@ def plot_reaction_times(par, reaction_times, bad_trials, min_threshold, max_thre
 
 def ptp_outliers_thresh(data, thresh):
     """
-    Identifies peak-to-peak (PTP) amplitude outliers based on a threshold value and returns a boolean array 
-    indicating which epochs channel conbinations contain outliers.
+    Identify peak-to-peak (PTP) amplitude outliers based on a threshold value and return a boolean array indicating
+    which epoch-channel combinations contain outliers.
 
-    Parameters
-    ----------
-    data : numpy.ndarray
-        A 3-dimensional numpy array containing the EEG data, where the shape is (epochs, channels, time_points)
-    thresh : float
-        A numeric value representing the threshold above which PTP amplitudes will be considered outliers.
+    Args:
+        data (numpy.ndarray): A 3-dimensional numpy array containing the EEG data, where the shape is
+            (epochs, channels, time_points).
+        thresh (float): A numeric value representing the threshold above which PTP amplitudes will be considered outliers.
 
-    Returns
-    -------
-    numpy.ndarray
-        A boolean array indicating which trials contain PTP amplitude outliers. The shape of the array is 
-        (Epochs, Channels).
+    Returns:
+        numpy.ndarray: A boolean array indicating which trials contain PTP amplitude outliers. The shape of the array is
+            (epochs, channels).
     """
     # Calculate the peak-to-peak amplitudes of the EEG data along the time axis
     ptp = np.ptp(data, axis=2)
@@ -175,25 +177,19 @@ def ptp_outliers_stat(data, nstd):
     Identifies epochs in the given data where the peak-to-peak amplitude values are above a certain number of
     standard deviations from the mean across channels.
 
-    Parameters
-    ----------
-    data : ndarray, shape (n_epochs, n_channels, n_samples)
-        The data to analyze.
-    nstd : float
-        The number of standard deviations from the mean above which an epoch is considered an outlier.
+    Args:
+        data (ndarray, shape (n_epochs, n_channels, n_samples)): The data to analyze.
+        nstd (float): The number of standard deviations from the mean above which an epoch is considered an outlier.
 
-    Returns
-    -------
-    outliers : ndarray, shape (n_epochs, n_channels)
-        A boolean array indicating which epochs and channels contain outliers, based on the peak-to-peak
-        amplitude values being greater than `nstd` standard deviations from the mean.
+    Returns:
+        outliers (ndarray, shape (n_epochs, n_channels)): A boolean array indicating which epochs and channels contain outliers,
+            based on the peak-to-peak amplitude values being greater than `nstd` standard deviations from the mean.
 
-    Notes
-    -----
-    Peak-to-peak (PTP) amplitude is calculated as the difference between the maximum and minimum values in each epoch.
-    The mean and standard deviation are calculated across all epochs for each channel, and z-scores are computed
-    for each epoch and channel based on these values. An epoch is considered an outlier if its PTP amplitude
-    z-score is greater than the number of standard deviations specified `nstd`.
+    Notes:
+        - Peak-to-peak (PTP) amplitude is calculated as the difference between the maximum and minimum values in each epoch.
+        - The mean and standard deviation are calculated across all epochs for each channel, and z-scores are computed
+          for each epoch and channel based on these values.
+        - An epoch is considered an outlier if its PTP amplitude z-score is greater than the number of standard deviations specified `nstd`.
     """
     # Compute the PTP for each epoch
     ptp_epoch = np.ptp(data, axis=-1)
@@ -211,22 +207,14 @@ def ptp_outliers_stat(data, nstd):
 def plot_outlier(par, RT_outliers, ptp_outliers, ptp_stat_outliers, combined_outliers, gocue=True):
     """
     Plots different types of outliers as images using matplotlib.
-    
-    Parameters
-    ----------
-    RT_outliers : numpy.ndarray
-        The 2-dimensional numpy array of RT outliers to be plotted.
-    ptp_outliers : numpy.ndarray
-        The 2-dimensional numpy array of ptp outliers to be plotted.
-    ptp_stat_outliers : numpy.ndarray
-        The 2-dimensional numpy array of ptp_stat outliers to be plotted.
-    combined_outliers : numpy.ndarray
-        The 2-dimensional numpy array of combined outliers to be plotted.
-    
-    Returns
-    -------
-    matplotlib.figure.Figure
-        The generated matplotlib Figure object.
+
+    Args:
+        par (int): Participant number.
+        RT_outliers (numpy.ndarray): The 2-dimensional numpy array of RT outliers to be plotted.
+        ptp_outliers (numpy.ndarray): The 2-dimensional numpy array of ptp outliers to be plotted.
+        ptp_stat_outliers (numpy.ndarray): The 2-dimensional numpy array of ptp_stat outliers to be plotted.
+        combined_outliers (numpy.ndarray): The 2-dimensional numpy array of combined outliers to be plotted.
+        gocue (bool, optional): Whether the plot is for the gocue or activation condition.
     
     """
     # Set the figure size and create a new figure
@@ -268,29 +256,26 @@ def plot_outlier(par, RT_outliers, ptp_outliers, ptp_stat_outliers, combined_out
 
 def epoch_outlier_indices(data, events, par, rt_thresh=(150, 1000), ptp_thresh=80e-6, nstd=3, plot=False, gocue=True):
     """
-    Identifies outlier epochs based on reaction time (RT) and peak-to-peak (PTP) thresholds. Then removes those outliers 
-    and apply statictical outlier removal. Finaly, it returns the indices of the outlier epochs 
-    from both of the detection methods.
-    
-    Parameters
-    ----------
-    data : numpy.ndarray
-        A 3-dimensional numpy array of shape (Epochs, Channels, Samples) containing the EEG data.
-    events : numpy.ndarray
-        A 2-dimensional numpy array containing event information, where each row represents an event and each 
-        column represents a different attribute of the event (e.g., time, event type, etc.).
-    rt_thresh : float, optional
-        A numeric value representing the threshold above which RTs will be considered outliers. Default is 1000.
-    ptp_thresh : float, optional
-        A numeric value representing the threshold below which PTP values will be considered outliers. Default is 80e-6.
-    nstd : float, optional
-        A numeric value representing the number of standard deviations from the mean above which PTP values will be 
-        considered outliers. Default is 3.
-    
-    Returns
-    -------
-    numpy.ndarray
-        A 1-dimensional numpy array containing the indices of the outlier epochs in the original data array.
+    Identifies outlier epochs based on reaction time (RT) and peak-to-peak (PTP) thresholds. Then removes those outliers
+    and applies statistical outlier removal. Finally, it returns the indices of the outlier epochs from both of the 
+    detection methods.
+
+    Args:
+        data (numpy.ndarray): A 3-dimensional numpy array of shape (Epochs, Channels, Samples) containing the EEG data.
+        events (numpy.ndarray): A 2-dimensional numpy array containing event information, where each row represents an 
+            event and each column represents a different attribute of the event (e.g., time, event type, etc.).
+        par (int): Participant number.
+        rt_thresh (float, optional): A numeric value representing the threshold above which RTs will be considered 
+            outliers. Default is (150, 1000).
+        ptp_thresh (float, optional): A numeric value representing the threshold below which PTP values will be 
+            considered outliers. Default is 80e-6.
+        nstd (float, optional): A numeric value representing the number of standard deviations from the mean above 
+            which PTP values will be considered outliers. Default is 3.
+        plot (bool, optional): Whether to plot the outliers. Default is False.
+        gocue (bool, optional): Whether the plot is for the gocue or activation condition.
+
+    Returns:
+        numpy.ndarray: A 1-dimensional numpy array containing the indices of the outlier epochs in the original data array.
     """
     
     # Find the outliers for the RTs and peak to peak distance threshold.
@@ -337,9 +322,3 @@ def epoch_outlier_indices(data, events, par, rt_thresh=(150, 1000), ptp_thresh=8
     
     print(f"Successfully detected the epoch outliers, found {len(outlier_indices)} outliers")
     return outlier_indices
-
-
-
-
-
-

@@ -38,32 +38,28 @@ def visualize_significant_distribution(samples, p_value, observed_value):
     plt.legend()
     plt.show()
 
-
 def chronological_train_test_split(X, y, test_size):
     """
     Split the data into training and testing sets while keeping the data in chronological order.
 
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        The input samples.
-    y : array-like of shape (n_samples,)
-        The target values.
-    test_size : float or int
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        absolute number of test samples.
+    Args:
+        X (array-like): The input samples.
+            Input data of shape (n_samples, n_features).
+        y (array-like): The target values.
+            Target data of shape (n_samples,).
+        test_size (float or int): The size of the test set.
+            If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split.
+            If int, represents the absolute number of test samples.
 
-    Returns
-    -------
-    X_train : array-like of shape (n_train_samples, n_features)
-        The training input samples.
-    X_test : array-like of shape (n_test_samples, n_features)
-        The testing input samples.
-    y_train : array-like of shape (n_train_samples,)
-        The training target values.
-    y_test : array-like of shape (n_test_samples,)
-        The testing target values.
+    Returns:
+        X_train (array-like): The training input samples.
+            Training data of shape (n_train_samples, n_features).
+        X_test (array-like): The testing input samples.
+            Testing data of shape (n_test_samples, n_features).
+        y_train (array-like): The training target values.
+            Training target data of shape (n_train_samples,).
+        y_test (array-like): The testing target values.
+            Testing target data of shape (n_test_samples,).
     """
 
     # Determine the number of test samples based on the test_size parameter
@@ -88,19 +84,18 @@ def chronological_train_test_split(X, y, test_size):
 
 def assign_percentiles(array, low_pct, high_pct):
     """
-    Takes an array and assigns a 0 to each element that is below the low percentile 
-    and a 1 to each element that is above the high percentile.
-    
-    Arguments:
-    array -- a NumPy array of data to classify
-    low_pct -- the percentile below which data should be classified as 0
-    high_pct -- the percentile above which data should be classified as 1
-    
+    Assigns a class to each element in an array based on percentiles.
+
+    Args:
+        array (numpy.ndarray): The array of data to classify.
+        low_pct (float): The percentile below which data should be classified as 0.
+        high_pct (float): The percentile above which data should be classified as 1.
+
     Returns:
-    A tuple containing:
-    - A NumPy array of the assigned classes (0 or 1)
-    - A list of indices that were not included in the classification 
-    (i.e., between the low and high percentiles)
+        tuple: A tuple containing:
+            - classes (numpy.ndarray): An array of assigned classes (0 or 1).
+            - indices (list): A list of indices that were not included in the classification
+              (i.e., between the low and high percentiles).
     """
     low_val = np.percentile(array, low_pct)
     high_val = np.percentile(array, high_pct)
@@ -110,6 +105,25 @@ def assign_percentiles(array, low_pct, high_pct):
     return np.delete(classes, indices), indices
 
 def calculate_p_values(model, X, y, n_permutations=10000, alternative='two-sided'):
+    """
+    Calculate p-values using permutation testing.
+
+    Args:
+        model: The model object with a `score` method.
+            The model used to calculate the test statistic.
+        X (array-like): Input features.
+            Input data of shape (n_samples, n_features).
+        y (array-like): Target values.
+            Target data of shape (n_samples,).
+        n_permutations (int, optional): The number of permutations. Defaults to 10000.
+        alternative (str, optional): The alternative hypothesis for the test. 
+            Should be one of 'two-sided', 'less', or 'greater'. Defaults to 'two-sided'.
+
+    Returns:
+        p_value (float): The calculated p-value based on the chosen alternative.
+            The p-value for the hypothesis test.
+    """
+
     # Calculate the observed test statistic
     score = model.score(X, y)
     
@@ -125,8 +139,6 @@ def calculate_p_values(model, X, y, n_permutations=10000, alternative='two-sided
         permuted_score = model.score(X, permuted_y)
         permutation_scores[i] = permuted_score
 
-    
-    
     # Calculate the mean of the permuted test statistics
     # permuted_mean = np.mean(permutation_scores)
     
@@ -159,31 +171,3 @@ def calculate_p_values(model, X, y, n_permutations=10000, alternative='two-sided
     # visualize_significant_distribution(permutation_scores, p_value, score)
 
     return p_value
-
-
-def calculate_p_values_classification(model, X, y, n_permutations=10000):
-    coef = model.coef_[0]
-    n_features = X.shape[1]
-    
-    # Calculate the observed test statistic
-    lda_score = model.score(X, y)
-    
-    # Permutation testing
-    permutation_scores = np.zeros(n_permutations)
-    for i in range(n_permutations):
-        # Permute the response variable
-        permuted_y = np.random.permutation(y)
-        
-        # Calculate the test statistic for permuted data
-        permuted_score = model.score(X, permuted_y)
-        permutation_scores[i] = permuted_score
-    
-    plt.hist(permutation_scores)
-    plt.title('Classification')
-    plt.show()
-
-    # Calculate the p-values
-    p_values = (len(np.where(permutation_scores >= lda_score)[0]) + 1) / (n_permutations + 1) 
-    print(p_values)
-
-    return p_values

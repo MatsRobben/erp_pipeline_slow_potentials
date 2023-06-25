@@ -6,6 +6,18 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 def plot_avg_epochs(epochs, boundaries, par):
+    """
+    Plots the average channel activity and intervals used for features.
+
+    Args:
+        epochs (mne.Epochs): The Epochs object containing epoched data.
+        boundaries (list): A list of time boundaries for computing the means. Must be in seconds.
+        par (int): Participant number.
+
+    Returns:
+        matplotlib.figure.Figure: The generated matplotlib Figure object.
+    """
+    # Get the center of every boundary interval
     scalp_times = []
     for b in range(0, len(boundaries), 2):
         scalp_times.append((boundaries[b+1]+boundaries[b]) / 2)
@@ -26,37 +38,21 @@ def preprocess_epochs(epochs, ica, events, outliers, participant, boundaries, ic
     Preprocesses the raw EEG data by applying Independent Component Analysis (ICA), frequency filtering, and epoching.
     The specified outliers are dropped from the epochs and reaction times arrays.
 
-    Parameters
-    ----------
-    raw_data : mne.io.Raw
-        The raw EEG data to be preprocessed.
-    ica : mne.preprocessing.ICA
-        The ICA object to apply to the data.
-    events : numpy.ndarray
-        A 2-dimensional numpy array containing event information, where each row represents an event and each 
-        column represents a different attribute of the event (e.g., time, event type, etc.).
-    event_id : dict
-        A dictionary mapping event types to integer IDs.
-    outliers : numpy.ndarray
-        A 1-dimensional numpy array containing the indices of the outlier epochs.
-    l_freq : float or None
-        The lower frequency bound of the filter. If None, no filtering is applied.
-    h_freq : float or None
-        The upper frequency bound of the filter. If None, no filtering is applied.
-    tmin : float
-        The start time of the epochs relative to the event onset.
-    tmax : float
-        The end time of the epochs relative to the event onset.
-    decim : int
-        The decimation factor to use. If 1, no decimation is applied.
+    Args:
+        epochs (mne.Epochs): The Epochs object containing epoched data.
+        ica (mne.preprocessing.ICA): The ICA object to apply to the data.
+        events (numpy.ndarray): A 2-dimensional numpy array containing event information, where each row represents an event and each 
+            column represents a different attribute of the event (e.g., time, event type, etc.).
+        outliers (numpy.ndarray): A 1-dimensional numpy array containing the indices of the outlier epochs.
+        participant (int): Participant number.
+        boundaries (list): A list of time boundaries for computing the means. Must be in seconds.
+        icaSpace (bool, optional): Whether to return epochs in ICA space. Default is False.
+        gocue (bool, optional): Whether the data is for the gocue condition. Default is True.
+        train (bool, optional): Whether the data is for training. Default is True.
 
-    Returns
-    -------
-    new_epochs : mne.Epochs
-        The preprocessed epochs.
-    RTs : numpy.ndarray
-        The reaction times for the preprocessed epochs.
-
+    Returns:
+        mne.Epochs or mne.EpochsArray: The preprocessed epochs.
+        numpy.ndarray: The reaction times for the preprocessed epochs.
     """
     RTs, bad_rts = reaction_times(events, gocue)
     if not train and bad_rts:
@@ -94,25 +90,14 @@ def get_jumping_means(epo, boundaries, per_two=False):
     """
     Computes the jumping means of the epoched data.
 
-    Parameters
-    ----------
-    epo : mne.Epochs object
-        The epoched data.
-    boundaries : list
-        A list of time boundaries for computing the means. Must be in seconds.
-    per_two : Bool
-        If true the function only uses the interval between each pair of bounds.
-        Example: bounds = [1, 3, 5, 6] => [mean(1,3), mean(5,6)] instead of 
-        [mean(1,3), mean(3,5), mean(5,6)].
+    Args:
+        epo (mne.Epochs): The epoched data.
+        boundaries (list): A list of time boundaries for computing the means. Must be in seconds.
+        per_two (bool, optional): If True, the function only uses the interval between each pair of bounds.
+            Example: boundaries = [1, 3, 5, 6] => [mean(1,3), mean(5,6)] instead of [mean(1,3), mean(3,5), mean(5,6)].
 
-    Returns
-    -------
-    X : ndarray, shape (n_epochs, n_channels, n_jumps)
-        The computed jumping means for each channel in each epoch for each jump.
-    
-    Notes
-    -------
-    This function was taken from assignment 6 of the Brain-Computer Interfacing (SOW-BKI323) course
+    Returns:
+        numpy.ndarray: The computed jumping means for each channel in each epoch for each selected interval.
     """
     # Get the original shape of the data
     shape_orig = epo.get_data().shape
@@ -138,22 +123,20 @@ def get_jumping_means(epo, boundaries, per_two=False):
 
 
 def extract_features(epochs, RTs, boundaries, per_two=False):
-    """Extracts features from epochs and reaction time data
-    
+    """
+    Extracts features from epochs and reaction time data.
+
     Args:
-    epochs: mne Epochs object containing epoched data
-    RTs: numpy array containing reaction times
-    boundaries: list of boundaries to group sections of the epoch. 
-    Smallest value can not be smaller then tmin and largest 
-    can not be greater then tmax.
-    
+        epochs (mne.Epochs): The Epochs object containing epoched data.
+        RTs (numpy.ndarray): The reaction times.
+        boundaries (list): A list of boundaries to group sections of the epoch. The smallest value cannot be smaller
+            than tmin, and the largest cannot be greater than tmax.
+        per_two (bool, optional): If True, the function only uses the interval between each pair of bounds.
+            Example: boundaries = [1, 3, 5, 6] => [mean(1,3), mean(5,6)] instead of [mean(1,3), mean(3,5), mean(5,6)].
+
     Returns:
-    X: numpy array containing feature data
-    y: numpy array containing reaction time data
-    
-    Notes
-    -------
-    This function was taken from assignment 6 of the Brain-Computer Interfacing (SOW-BKI323) course
+        numpy.ndarray: The feature data.
+        numpy.ndarray: The reaction time data.
     """
     # Define number of channels and features
     n_channels = len(epochs.info["chs"])
@@ -175,23 +158,15 @@ def reduce_dimensionality(X, n_components):
     """
     Reduce the dimensionality of the feature space using PCA.
 
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Input data.
-    n_components : int or None, optional
-        Number of components to keep. If None, all components are kept.
+    Args:
+        X (array-like): Input data of shape (n_samples, n_features).
+        n_components (int or None, optional): Number of components to keep. If None, all components are kept.
 
-    Returns
-    -------
-    X_reduced : array-like of shape (n_samples, n_components)
-        The reduced data.
+    Returns:
+        array-like: The reduced data of shape (n_samples, n_components).
 
-    Raises
-    ------
-    ValueError
-        If both `n_components` and `explained_variance` are None, or if `explained_variance` is not between 0 and 1.
-
+    Raises:
+        ValueError: If both n_components and explained_variance are None, or if explained_variance is not between 0 and 1.
     """
     pca = PCA(n_components=n_components, svd_solver='full')
     X_reduced = pca.fit_transform(X)

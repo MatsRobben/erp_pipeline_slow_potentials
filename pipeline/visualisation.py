@@ -7,18 +7,6 @@ from itertools import product
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
-
-def visualize_average_feature_importance(models, feature_names):
-    """
-    Visualizes the average activation per unique feature for a list of regression models.
-
-    Args:
-        models (list): List of regression models.
-        feature_names (list): List of feature names for each model.
-
-    Returns:
-        None (displays the plot)
-    """
     
 def visualize_average_feature_importance(models, feature_names, num_time_windows=3):
     """
@@ -87,8 +75,59 @@ def visualize_feature_importance(model, feature_names, par, gocue):
     name = 'gocue_feature_importance' if gocue else 'activation_feature_importance'
     save_plot(fig, 'plots', name, '.svg', par=par)
 
+def plot_p_values(regression_p_values, classification_p_values, participant_numbers):
+    """
+    Plots the p-values of regression and classification models for each participant.
+
+    Args:
+        regression_p_values (list): List of regression model p-values.
+        classification_p_values (list): List of classification model p-values.
+        participant_numbers (list): List of participant numbers.
+
+    Returns:
+        None (displays the plot)
+    """
+    num_participants = len(participant_numbers)
+
+    # Set the x-axis range based on the number of participants
+    x = np.arange(num_participants)
+
+    # Set the width of each bar
+    bar_width = 0.35
+
+    # Plot regression p-values
+    plt.bar(x, regression_p_values, width=bar_width, color='b', alpha=0.5, label='Regression')
+
+    # Plot classification p-values with adjusted bar position
+    plt.bar(x + bar_width, classification_p_values, width=bar_width, color='r', alpha=0.5, label='Classification')
+
+    # Add participant numbers to x-axis
+    plt.xticks(x + bar_width / 2, participant_numbers)
+
+    # Draw a horizontal line at the p-value threshold of 0.05
+    plt.axhline(y=0.05, color='k', linestyle='--', label='Threshold')
+
+    plt.xlabel('Participant Number')
+    plt.ylabel('p-value')
+    plt.title('p-values of Regression and Classification Models')
+    plt.legend()
+    plt.tight_layout()
+
+    plt.show()
 
 def plot_scatter_lin_reg(X, y, par, reg_model, train=True, test_size=0.2, gocue=True):
+    """
+    Plot scatter plot and linear regression line for the given data.
+
+    Args:
+        X (numpy.ndarray): Input features.
+        y (numpy.ndarray): Target values.
+        par (int): Participant number.
+        reg_model (sklearn.linear_model): Regression model object with `fit` and `predict` methods.
+        train (bool, optional): If True, perform plotting for training data.
+        test_size (float, optional): Test data size for train-test split.
+        gocue (bool, optional): If True, plot for gocue data; otherwise, plot for activation data.
+    """
     name = 'gocue_scatter_lin_reg' if gocue else 'activation_scatter_lin_reg'
 
     if train:
@@ -131,8 +170,19 @@ def plot_scatter_lin_reg(X, y, par, reg_model, train=True, test_size=0.2, gocue=
 
         save_plot(fig, 'plots/test', name, '.svg', par=par)
 
-
 def plot_time_lin_reg(X, y, par, reg_model, train=True, test_size=0.2, gocue=True):
+    """
+    Plot the real and predicted reaction times over time using linear regression.
+
+    Args:
+        X (numpy.ndarray): Input features.
+        y (numpy.ndarray): Target values.
+        par (int): Participant number.
+        reg_model (sklearn.linear_model): Regression model object with `fit`, `predict`, and `score` methods.
+        train (bool, optional): If True, perform plotting for training data.
+        test_size (float, optional): Test data size for train-test split.
+        gocue (bool, optional): If True, plot for gocue data; otherwise, plot for activation data.
+    """
 
     name = 'gocue_time_lin_reg' if gocue else 'activation_time_lin_reg'
  
@@ -181,26 +231,20 @@ def plot_time_lin_reg(X, y, par, reg_model, train=True, test_size=0.2, gocue=Tru
 
         save_plot(fig, 'plots/test', name, '.svg', par=par)
 
-
 def lda_chron(X, y, class_model, par, plot_cm=False, plot_roc=False):
     """
-    Perform LDA with chronological split cross-validation.
+    Perform LDA with chronological split cross-validation and plot results.
 
-    Parameters
-    ----------
-    X : numpy.ndarray
-        Input features.
-    y : numpy.ndarray
-        Target values.
-    plot_cm : bool, optional
-        If True, plot confusion matrix for each split.
-    plot_roc : bool, optional
-        If True, plot ROC curve for each split.
+    Args:
+        X (numpy.ndarray): Input features.
+        y (numpy.ndarray): Target values.
+        class_model (sklearn.discriminant_analysis.LinearDiscriminantAnalysis): LDA model object with `predict`, `predict_proba`, and `score` methods.
+        par (int): Participant number.
+        plot_cm (bool, optional): If True, plot confusion matrix for each split.
+        plot_roc (bool, optional): If True, plot ROC curve for each split.
 
-    Returns
-    -------
-    fig: matplotlib figure
-        A figure with two subplots, one for the confusion matrix and one for the roc curve
+    Returns:
+        matplotlib.figure.Figure: A figure with two subplots, one for the confusion matrix and one for the ROC curve.
     """
 
     y_pred = class_model.predict(X)
@@ -240,28 +284,19 @@ def lda_chron(X, y, class_model, par, plot_cm=False, plot_roc=False):
 
     return fig
 
-
 def lda_chron_split_avg(X, y, n_splits, class_model, tscv, par, plot_cm=False, plot_roc=False):
     """
-    Perform LDA with chronological split cross-validation.
+    Perform LDA with chronological split cross-validation and plot average results.
 
-    Parameters
-    ----------
-    X : numpy.ndarray
-        Input features.
-    y : numpy.ndarray
-        Target values.
-    n_splits : int, optional
-        Number of splits for time series cross-validation.
-    plot_cm : bool, optional
-        If True, plot confusion matrix for each split.
-    plot_roc : bool, optional
-        If True, plot ROC curve for each split.
-
-    Returns
-    -------
-    acc_scores: List
-        The accuracy scores obtained by the different splits
+    Args:
+        X (numpy.ndarray): Input features.
+        y (numpy.ndarray): Target values.
+        n_splits (int): Number of splits for time series cross-validation.
+        class_model (sklearn.discriminant_analysis.LinearDiscriminantAnalysis): LDA model object with `fit`, `predict`, and `score` methods.
+        tscv (sklearn.model_selection.TimeSeriesSplit): Time series cross-validation object.
+        par (int): Participant number.
+        plot_cm (bool, optional): If True, plot confusion matrix for each split.
+        plot_roc (bool, optional): If True, plot ROC curve for each split.
     """
     acc_scores = []
     y_true_list, y_pred_list, y_prob_list = [], [], []
@@ -331,28 +366,28 @@ def lda_chron_split_avg(X, y, n_splits, class_model, tscv, par, plot_cm=False, p
 
     return fig
 
-
 def lda_chron_split(X, y, n_splits, class_model, tscv, par, plot_cm=False, plot_roc=False):
     """
     Perform LDA with chronological split cross-validation.
 
-    Parameters
-    ----------
-    X : numpy.ndarray
-        Input features.
-    y : numpy.ndarray
-        Target values.
-    n_splits : int, optional
-        Number of splits for time series cross-validation.
-    plot_cm : bool, optional
-        If True, plot confusion matrix for each split.
-    plot_roc : bool, optional
-        If True, plot ROC curve for each split.
+    Args:
+        X (numpy.ndarray): Input features.
+            Input data of shape (n_samples, n_features).
+        y (numpy.ndarray): Target values.
+            Target data of shape (n_samples,).
+        n_splits (int): Number of splits for time series cross-validation.
+        class_model (sklearn.discriminant_analysis.LinearDiscriminantAnalysis): LDA model object.
+            An instance of LDA model with `fit`, `predict`, and `score` methods.
+        tscv (sklearn.model_selection.TimeSeriesSplit): Time series cross-validation object.
+            An instance of TimeSeriesSplit for splitting the data.
+        par (int): Participant number.
+            The participant number for identification.
+        plot_cm (bool, optional): Whether to plot the confusion matrix for each split. Defaults to False.
+        plot_roc (bool, optional): Whether to plot the ROC curve for each split. Defaults to False.
 
-    Returns
-    -------
-    acc_scores: List
-        The accuracy scores obtained by the different splits
+    Returns:
+        acc_scores (list): The accuracy scores obtained for the different splits.
+            A list containing the accuracy scores for each split.
     """
     acc_scores = []
     y_true_list, y_pred_list, y_prob_list = [], [], []
@@ -403,8 +438,26 @@ def lda_chron_split(X, y, n_splits, class_model, tscv, par, plot_cm=False, plot_
 
     return fig
 
-
 def plot_lin_class(X, y, par, class_model, n_splits=5, train=True, gocue=True):
+    """
+    Plot linear classification results using LDA.
+
+    Args:
+        X (numpy.ndarray): Input features.
+            Input data of shape (n_samples, n_features).
+        y (numpy.ndarray): Target values.
+            Target data of shape (n_samples,).
+        par (int): Participant number.
+            The participant number for identification.
+        class_model (sklearn.discriminant_analysis.LinearDiscriminantAnalysis): LDA model object.
+            An instance of LDA model with `fit`, `predict`, and `score` methods.
+        n_splits (int, optional): Number of splits for time series cross-validation. Defaults to 5.
+        train (bool, optional): Whether to perform plotting for training data. Defaults to True.
+        gocue (bool, optional): Whether to plot for gocue data. If False, plot for activation data. Defaults to True.
+
+    Returns:
+        None
+    """
     name = 'gocue_lin_class_scores' if gocue else 'activation_lin_class_scores'
 
     if train:
