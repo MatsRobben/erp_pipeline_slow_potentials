@@ -1,11 +1,13 @@
+# Load functions from pipeline
 from pipeline.load_data import load_save_epochs, load_epochs, load_events
 from pipeline.parameter_selection import bad_channels, load_save_ica, load_ica
-from pipeline.feature_selection import preprocess_epochs, extract_features, reduce_dimensionality
+from pipeline.feature_selection import preprocess_epochs, extract_features
 from pipeline.utilities import get_participants
-from pipeline.visualisation import plot_scatter_lin_reg, plot_lin_class, plot_time_lin_reg, visualize_feature_importance, visualize_average_feature_importance
+from pipeline.visualisation import plot_scatter_lin_reg, plot_lin_class, plot_time_lin_reg
 from pipeline.epoch_outliers import epoch_outlier_indices, reaction_times
-from pipeline.models import assign_percentiles, calculate_p_values
+from pipeline.models import assign_percentiles
 
+# Load external libraries
 from sklearn.linear_model import LinearRegression, Lasso, Ridge
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 import mne
@@ -18,13 +20,15 @@ import matplotlib.pyplot as plt
 
 mne.set_log_level('WARNING')
 
+# Load hyperparameters for each individual participant
 with open('participants_config') as json_file:
     info = json.load(json_file)
 
-pars_test = {}
+trained_models = {}
 
 participants = get_participants()
 
+# Set variables
 non_eeg_channels = ['XForce', 'EOGvu', 'x_EMGl', 'x_GSR', 'x_Respi', 'x_Pulse', 'x_Optic']
 event_splits = ({'Go cue 1': 210, 'Go cue 2': 211}, {'first activation': 150})
 tmin, tmax = (-2.5, -2), (0.5, 0)
@@ -32,6 +36,8 @@ l_freq, h_freq = (1, 0.3), (48, 3)
 decim = 5
 low_pct, high_pct = 50, 50
 
+# Functions that do not always have to be run
+# Creating the epoch data, train ICA model, and plotting the data for visual inspection.
 create_data, create_ica, check_data = False, False, False
 if create_data:
     load_save_epochs(tmin=tmin, tmax=tmax, l_freq=l_freq, h_freq=h_freq, 
@@ -55,10 +61,6 @@ if gocue:
     file_name = "gocue"
 else:
     file_name = "action"
-
-
-models = []
-feature_names = []
 
 # Run analysis for train data
 for par in participants:
@@ -101,7 +103,6 @@ for par in participants:
 
         # Create features
         X, y = extract_features(epochs.pick(info[par]['ch_picks']), RTs, clf_ival_boundaries, per_two=True)
-        # X = reduce_dimensionality(X, n_components=59)
 
         lin_reg = Lasso(alpha=0.000009)
         lin_class = LDA(solver='lsqr', shrinkage='auto')
@@ -113,21 +114,14 @@ for par in participants:
         plot_time_lin_reg(X, y, par, lin_reg, test_size=0.2, gocue=gocue)
         plot_lin_class(X_split, y_split, par, lin_class, gocue=gocue)
 
-        pars_test[par] = {
-            'num_feathers': X.shape[1], 
+        trained_models[par] = {
             'lin_reg': lin_reg.fit(X, y), 
             'lin_class': lin_class.fit(X_split, y_split)
         }
 
-        feature_names.append([f"{ch}_{i}" for ch in info[par]['ch_picks'] for i in range(1, 4)])
-        models.append(pars_test[par]['lin_reg'])
-        # visualize_feature_importance(pars_test[par]['lin_reg'], feature_names, par, gocue)
-
-# visualize_average_feature_importance(models, feature_names)
-
 # Run parameter from above analysis on test data
 for par in participants:
-    if par in pars_test: 
+    if par in trained_models: 
         data_path = f'saved-data/{par}'
 
         events = load_events(f'{data_path}/test')
@@ -152,11 +146,10 @@ for par in participants:
 
         # Create features
         X, y = extract_features(epochs.pick(info[par]['ch_picks']), RTs, clf_ival_boundaries, per_two=True)
-        # X = reduce_dimensionality(X, n_components=pars_test[par]['num_feathers'])
 
         # Load the already traind models
-        lin_reg = pars_test[par]['lin_reg']
-        lin_class = pars_test[par]['lin_class']
+        lin_reg = trained_models[par]['lin_reg']
+        lin_class = trained_models[par]['lin_class']
         
         y_split, indices = assign_percentiles(y, low_pct=low_pct, high_pct=high_pct)
         X_split = np.delete(X, indices, axis=0)
@@ -165,3 +158,4 @@ for par in participants:
         plot_scatter_lin_reg(X, y, par, lin_reg, train=False, gocue=gocue)
         plot_time_lin_reg(X, y, par, lin_reg, train=False, gocue=gocue)
         plot_lin_class(X_split, y_split, par, lin_class, train=False, gocue=gocue)
+
