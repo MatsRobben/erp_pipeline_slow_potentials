@@ -1,0 +1,11 @@
+{
+    "participant_name": {
+        "exclude": "ICA components that should be excluded, for example [3, 5, 10, 28]", 
+        "bad_chn": "Bad channels, for example ['POz']", 
+        "rt_thresh": "The reaction times in ms that are to slow or fast, for example  [200, 1000]", 
+        "ptp_thresh": "Threshold for peak to peak distance, for exaple 8e-05",
+        "ptp_nstd": "Threshold for standard diviations epoch outliers, for exaple 3",
+        "clf_ival_boundaries": "Start and end times of boundaries: [start_time_bound1, end_time_bound1, ...]",
+        "ch_picks": "Selected channels for feature selection, for example ['POz', 'Pz', 'Oz', 'PO5', 'PO6']"
+    }
+}
