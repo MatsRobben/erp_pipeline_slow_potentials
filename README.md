@@ -2,6 +2,9 @@
 
 This repository contains the code used for analysis in the Artificial Intelligence Bachelor Thesis of Mats Robben. Additionally, the repository contains all the figures that were generated during the analysis, which can be found in the `appendix` folder. 
 
+## Installation
+This project was written in Python, using the MNE library. Therefore, it is necessary to install both before attempting to run the code. The project assumes the EEG data is stored in a folder named `Data`, where every participant has its own folder containing the EEG recordings. In addition, the assumption is made that the markers s150 (movement onset), s210 (go-cue condition 1), s211 (go-cue condition 2) are present in the marker files. Furthermore, the analysis requires the `participants_config` to be filled in properly, which stores all the hyperparameters for the participants. The template of this file can be found in the repository.
+
 ## Appendix
 The appendix folder contains two sub-directories, one for the pre-trial figures and one for the pre-movement figures. Both sub-directories contain the same 9 files, which in turn contain the figures of the participants. Here follows a short description of the 9 types of plots:
 
